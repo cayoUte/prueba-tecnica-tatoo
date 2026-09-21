@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* Modo oscuro por clase en <html> y no por preferencia del sistema, para que
+   el interruptor pueda sobreescribir lo que diga el sistema operativo. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 font-sans text-slate-900 antialiased;
+    @apply dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  /* Respeta a quien pidio menos movimiento en su sistema. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
