@@ -1,0 +1,459 @@
+{
+  "info": {
+    "name": "Prueba tecnica - API de Clima (Laravel 13)",
+    "description": "API de consulta de clima. Autenticacion por cookies de sesion con Laravel Sanctum.\n\nORDEN DE USO\n1. Ejecuta \"Obtener cookie CSRF\" una vez.\n2. Registrate o inicia sesion.\n3. El resto de las peticiones ya funcionan: Postman guarda las cookies solo.\n\nREQUISITO UNICO DE CONFIGURACION\nEl script pre-request de la coleccion lee la cookie XSRF-TOKEN y la manda como\ncabecera X-XSRF-TOKEN. Para que Postman permita leer cookies, entra a Cookies\n(bajo el boton Send) y agrega localhost a los dominios permitidos.\n\nSin esa cabecera, las peticiones POST y DELETE responden 419 (CSRF token mismatch).\n\nCODIGOS ESPERADOS\n200 lectura correcta | 201 creado | 204 eliminado | 401 sin sesion\n403 comentario ajeno | 404 ciudad no encontrada | 422 validacion | 503 OpenWeather caido",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "frontendUrl",
+      "value": "http://localhost:5173"
+    },
+    {
+      "key": "xsrf",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Lee la cookie XSRF-TOKEN y la expone como variable {{xsrf}}.",
+          "// Laravel rota ese token al iniciar sesion, por eso se lee antes de cada peticion.",
+          "const base = pm.collectionVariables.get('baseUrl');",
+          "pm.cookies.jar().get(base, 'XSRF-TOKEN', function (err, value) {",
+          "    if (!err && value) {",
+          "        pm.collectionVariables.set('xsrf', decodeURIComponent(value));",
+          "    }",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticacion",
+      "item": [
+        {
+          "name": "1. Obtener cookie CSRF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sanctum/csrf-cookie",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sanctum",
+                "csrf-cookie"
+              ]
+            },
+            "description": "Laravel responde 204 y deja las cookies XSRF-TOKEN y de sesion. Ejecutar primero."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Registro",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cayo\",\n  \"email\": \"cayo@test.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crea el usuario y deja la sesion iniciada. 422 si el email ya existe."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cayo@test.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "422 si las credenciales no coinciden."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Usuario actual",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user"
+              ]
+            },
+            "description": "401 si no hay sesion. Sirve para comprobar que la cookie viaja bien."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "logout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cierra la sesion e invalida la cookie."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Climas",
+      "item": [
+        {
+          "name": "Historial (publico)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/climas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climas"
+              ]
+            },
+            "description": "No requiere sesion. Devuelve cada consulta con sus comentarios anidados y temp_fahrenheit."
+          },
+          "response": []
+        },
+        {
+          "name": "Detalle de una consulta",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/climas/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climas",
+                "1"
+              ]
+            },
+            "description": "404 si el id no existe (route model binding)."
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar y guardar clima",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/climas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ciudad\": \"Quito\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "201 con el registro creado. 404 si OpenWeather no conoce la ciudad, 422 si ciudad viene vacia o con menos de 2 caracteres, 503 si OpenWeather no responde. Requiere sesion."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar consulta",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/climas/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climas",
+                "1"
+              ]
+            },
+            "description": "204 sin cuerpo. Los comentarios se borran en cascada. Requiere sesion."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Comentarios",
+      "item": [
+        {
+          "name": "Comentar una consulta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/climas/1/comentarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climas",
+                "1",
+                "comentarios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contenido\": \"Que fresco esta hoy\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "201. El clima sale de la URL y el autor de la sesion: el cuerpo solo lleva contenido."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar comentario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Referer",
+                "value": "{{frontendUrl}}"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comentarios/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comentarios",
+                "1"
+              ]
+            },
+            "description": "204 si eres el autor, 403 si el comentario es de otro usuario."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
