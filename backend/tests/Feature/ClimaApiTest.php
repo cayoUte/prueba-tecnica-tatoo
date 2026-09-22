@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Clima;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Services\Weather\WeatherService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -22,7 +24,7 @@ class ClimaApiTest extends TestCase
     {
         return [
             'name' => 'Loja',
-            'main' => ['temp' => 20.0, 'humidity' => 65],
+            'main' => ['temp' => 20.0, 'temp_min' => 17.5, 'temp_max' => 23.0, 'humidity' => 65],
             'weather' => [['description' => 'cielo claro']],
         ];
     }
@@ -37,9 +39,71 @@ class ClimaApiTest extends TestCase
             ->assertJsonStructure([
                 'data' => [[
                     'id', 'ciudad', 'temperatura', 'temp_fahrenheit',
-                    'humedad', 'condicion_clima', 'fecha_consulta',
+                    'temp_min', 'temp_max', 'humedad', 'condicion_clima', 'fecha_consulta',
                 ]],
             ]);
+    }
+
+    /** Mismo invariante que en el pronostico: a la cache van datos, no objetos. */
+    public function test_la_cache_del_clima_guarda_datos_planos(): void
+    {
+        Http::fake(['*/weather*' => Http::response($this->respuestaDeOpenWeather())]);
+
+        app(WeatherService::class)->consultar('Loja');
+
+        $guardado = Cache::get('clima:loja');
+
+        $this->assertIsArray($guardado);
+        $this->assertFalse(array_any($guardado, fn ($v) => is_object($v)));
+    }
+
+    /**
+     * Regresion: la cache guardaba el WeatherData ya construido y al releerlo
+     * volvia como __PHP_Incomplete_Class, asi que consultar dos veces la
+     * misma ciudad dentro de la ventana de cache reventaba con un 500.
+     */
+    public function test_guarda_la_minima_y_la_maxima_que_devuelve_el_servicio(): void
+    {
+        Http::fake(['*/weather*' => Http::response($this->respuestaDeOpenWeather())]);
+
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/climas', ['ciudad' => 'Loja'])
+            ->assertCreated()
+            ->assertJsonPath('data.temp_min', 17.5)
+            ->assertJsonPath('data.temp_max', 23);
+    }
+
+    /** Las consultas anteriores a la migracion no tienen minima ni maxima. */
+    public function test_la_minima_y_la_maxima_pueden_faltar(): void
+    {
+        Http::fake(['*/weather*' => Http::response([
+            'name' => 'Loja',
+            'main' => ['temp' => 20.0, 'humidity' => 65],
+            'weather' => [['description' => 'cielo claro']],
+        ])]);
+
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/climas', ['ciudad' => 'Loja'])
+            ->assertCreated()
+            ->assertJsonPath('data.temp_min', null)
+            ->assertJsonPath('data.temp_max', null);
+    }
+
+    public function test_consultar_dos_veces_la_misma_ciudad_usa_la_cache(): void
+    {
+        Http::fake(['*/weather*' => Http::response($this->respuestaDeOpenWeather())]);
+
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/climas', ['ciudad' => 'Loja'])->assertCreated();
+        $this->postJson('/api/climas', ['ciudad' => 'Loja'])
+            ->assertCreated()
+            ->assertJsonPath('data.ciudad', 'Loja')
+            ->assertJsonPath('data.temperatura', 20);
+
+        Http::assertSentCount(1);
     }
 
     public function test_crear_una_consulta_exige_autenticacion(): void

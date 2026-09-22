@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/climas', [ClimaController::class, 'index']);
 Route::get('/climas/{clima}', [ClimaController::class, 'show']);
+Route::get('/climas/{clima}/pronostico', [ClimaController::class, 'pronostico']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn (Request $request) => $request->user());

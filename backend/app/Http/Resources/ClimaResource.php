@@ -23,6 +23,8 @@ class ClimaResource extends JsonResource
             'ciudad' => $this->ciudad,
             'temperatura' => $this->temperatura,
             'temp_fahrenheit' => $this->temp_fahrenheit,
+            'temp_min' => $this->temp_min,
+            'temp_max' => $this->temp_max,
             'humedad' => $this->humedad,
             'condicion_clima' => $this->condicion_clima,
             'fecha_consulta' => $this->fecha_consulta,

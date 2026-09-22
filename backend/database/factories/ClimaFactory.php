@@ -15,9 +15,13 @@ class ClimaFactory extends Factory
      */
     public function definition(): array
     {
+        $temperatura = fake()->randomFloat(2, -5, 40);
+
         return [
             'ciudad' => fake()->city(),
-            'temperatura' => fake()->randomFloat(2, -5, 40),
+            'temperatura' => $temperatura,
+            'temp_min' => round($temperatura - fake()->randomFloat(2, 0, 4), 2),
+            'temp_max' => round($temperatura + fake()->randomFloat(2, 0, 4), 2),
             'humedad' => fake()->numberBetween(20, 100),
             'condicion_clima' => fake()->randomElement([
                 'cielo claro', 'nubes dispersas', 'muy nuboso', 'lluvia ligera',

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreClimaRequest;
 use App\Http\Resources\ClimaResource;
+use App\Http\Resources\HoraPronosticoResource;
 use App\Models\Clima;
 use App\Services\Weather\WeatherService;
 use Illuminate\Http\JsonResponse;
@@ -50,6 +51,17 @@ class ClimaController extends Controller
         return (new ClimaResource($clima))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
+    }
+
+    /**
+     * Pronostico de la ciudad de una consulta guardada.
+     * Publico, igual que el resto de lecturas.
+     */
+    public function pronostico(Clima $clima): AnonymousResourceCollection
+    {
+        return HoraPronosticoResource::collection(
+            $this->weather->pronostico($clima->ciudad)
+        );
     }
 
     public function destroy(Clima $clima): Response

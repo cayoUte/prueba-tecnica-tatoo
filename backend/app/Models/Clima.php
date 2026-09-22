@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Table('climas')]
-#[Fillable(['ciudad', 'temperatura', 'humedad', 'condicion_clima', 'fecha_consulta'])]
+#[Fillable(['ciudad', 'temperatura', 'temp_min', 'temp_max', 'humedad', 'condicion_clima', 'fecha_consulta'])]
 #[Appends(['temp_fahrenheit'])]
 class Clima extends Model
 {
@@ -26,6 +26,8 @@ class Clima extends Model
     {
         return [
             'temperatura' => 'float',
+            'temp_min' => 'float',
+            'temp_max' => 'float',
             'humedad' => 'integer',
             'fecha_consulta' => 'datetime',
         ];
