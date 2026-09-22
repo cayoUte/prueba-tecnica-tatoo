@@ -10,6 +10,7 @@ import { useFormulario } from '../hooks/useFormulario'
 import type { ErroresDe, Validador } from '../hooks/useFormulario'
 import { toApiError } from '../lib/http'
 import { correoValido, primerError, requerido } from '../utils/validaciones'
+import { Logo } from '../components/Logo'
 
 type Campos = { email: string; password: string }
 
@@ -59,16 +60,16 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      titulo="Inicia sesion"
-      descripcion="Necesitas una cuenta para consultar el clima y comentar."
+      titulo="Bienvenido a Weathery"
       pie={
         <>
           No tienes cuenta?{' '}
-          <Link to="/registro" className="font-medium text-sky-700 hover:underline dark:text-sky-400">
+          <Link to="/registro" className="font-medium text-acento-rosa hover:underline">
             Registrate
           </Link>
         </>
       }
+      logo={Logo({ tamano: '5xl' })}
     >
       <form onSubmit={enviar} className="space-y-4" noValidate>
         {error !== null && <Alert>{error}</Alert>}

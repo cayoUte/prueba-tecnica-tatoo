@@ -3,8 +3,7 @@ import type { FormEvent } from 'react'
 import { useFormulario } from '../hooks/useFormulario'
 import type { ErroresDe, Validador } from '../hooks/useFormulario'
 import type { ApiError } from '../types/api'
-import { longitudMaxima, longitudMinima, primerError, requerido } from '../utils/validaciones'
-import { Alert } from './ui/Alert'
+import { longitudMaxima, longitudMinima, primerError } from '../utils/validaciones'
 import { Button } from './ui/Button'
 import { TextArea } from './ui/TextArea'
 
@@ -15,14 +14,19 @@ const INICIALES: Campos = { contenido: '' }
 const MAXIMO = 500
 
 // Espeja StoreComentarioRequest: required, min 3, max 500.
+// Comentar es opcional, asi que el campo vacio no es un campo "obligatorio"
+// sin rellenar: es que no hay nada que enviar. El mensaje lo dice asi.
 const validar: Validador<Campos> = (valores) => {
   const errores: ErroresDe<Campos> = {}
 
-  const contenido = primerError(
-    requerido(valores.contenido, 'El comentario'),
-    longitudMinima(valores.contenido, 3, 'El comentario'),
-    longitudMaxima(valores.contenido, MAXIMO, 'El comentario'),
-  )
+  const contenido =
+    valores.contenido.trim().length === 0
+      ? 'Escribe un comentario antes de enviarlo.'
+      : primerError(
+          longitudMinima(valores.contenido, 3, 'El comentario'),
+          longitudMaxima(valores.contenido, MAXIMO, 'El comentario'),
+        )
+
   if (contenido !== undefined) errores.contenido = contenido
 
   return errores
@@ -35,15 +39,11 @@ interface Props {
 export function CommentForm({ onEnviar }: Props) {
   const { valores, esValido, cambiar, tocar, errorDe, marcarTodosTocados, aplicarErroresDeApi, reiniciar } =
     useFormulario(INICIALES, validar)
-  const [aviso, setAviso] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
-
-  const restantes = MAXIMO - valores.contenido.trim().length
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     marcarTodosTocados()
-    setAviso(null)
 
     if (!esValido) return
 
@@ -56,17 +56,12 @@ export function CommentForm({ onEnviar }: Props) {
       return
     }
 
+    // Solo los errores por campo: el resto lo anuncia el snackbar.
     aplicarErroresDeApi(fallo)
-
-    if (Object.keys(fallo.errors).length === 0) {
-      setAviso(fallo.message)
-    }
   }
 
   return (
-    <form onSubmit={enviar} className="space-y-3" noValidate>
-      {aviso !== null && <Alert>{aviso}</Alert>}
-
+    <form onSubmit={enviar} className="space-y-3 flex flex-col" noValidate>
       <TextArea
         etiqueta="Agregar un comentario"
         name="contenido"
@@ -78,18 +73,10 @@ export function CommentForm({ onEnviar }: Props) {
         error={errorDe('contenido')}
       />
 
-      <div className="flex items-center justify-between gap-3">
-        <span
-          className={
-            restantes < 0
-              ? 'text-xs text-red-600 dark:text-red-400'
-              : 'text-xs text-slate-400 dark:text-slate-500'
-          }
-        >
-          {restantes} caracteres restantes
-        </span>
-
-        <Button type="submit" cargando={enviando}>
+      {/* A lo ancho, igual que el boton de buscar cuando esta en su propia
+          fila: no hay nada a su lado que justifique dejarlo estrecho. */}
+      <div className="pt-2 pb-1">
+        <Button type="submit" cargando={enviando} className="w-full">
           Comentar
         </Button>
       </div>

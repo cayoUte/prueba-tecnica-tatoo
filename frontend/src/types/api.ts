@@ -24,11 +24,31 @@ export interface Clima {
   ciudad: string
   temperatura: number
   temp_fahrenheit: number
+  /** Minima y maxima de la medicion. Faltan en las consultas anteriores
+   *  a la migracion que las agrego, por eso son opcionales. */
+  temp_min?: number | null
+  temp_max?: number | null
   humedad: number
   condicion_clima: string
   fecha_consulta: string
   /** Llega solo cuando el backend precargo la relacion. */
   comentarios?: Comentario[]
+}
+
+/**
+ * Una franja del pronostico. OpenWeatherMap las entrega cada 3 horas en el
+ * plan gratuito, por eso no son horas consecutivas.
+ */
+export interface HoraPronostico {
+  hora: string
+  temperatura: number
+  temp_fahrenheit: number
+  /** Minima y maxima de la medicion. Faltan en las consultas anteriores
+   *  a la migracion que las agrego, por eso son opcionales. */
+  temp_min?: number | null
+  temp_max?: number | null
+  humedad: number
+  condicion_clima: string
 }
 
 /** Los API Resources de Laravel envuelven la respuesta en `data`. */

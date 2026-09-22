@@ -1,5 +1,5 @@
 import { http } from '../lib/http'
-import type { Clima, Envelope } from '../types/api'
+import type { Clima, Envelope, HoraPronostico } from '../types/api'
 
 export async function listarClimas(): Promise<Clima[]> {
   const { data } = await http.get<Envelope<Clima[]>>('/api/climas')
@@ -14,4 +14,10 @@ export async function consultarCiudad(ciudad: string): Promise<Clima> {
 
 export async function eliminarClima(id: number): Promise<void> {
   await http.delete(`/api/climas/${id}`)
+}
+
+/** Franjas futuras de la ciudad de una consulta. El pasado sale del historial. */
+export async function pronosticoDe(climaId: number): Promise<HoraPronostico[]> {
+  const { data } = await http.get<Envelope<HoraPronostico[]>>(`/api/climas/${climaId}/pronostico`)
+  return data.data
 }

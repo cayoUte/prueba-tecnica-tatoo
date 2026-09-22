@@ -7,14 +7,19 @@ interface Props extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: string
 }
 
+/**
+ * La misma escala compacta que TextField: etiqueta y texto de 10px, radio de
+ * 6px y 4px entre la etiqueta y el campo. Lo unico que cambia es que aqui la
+ * altura la fijan las filas, no un `h-*`.
+ */
 export function TextArea({ etiqueta, error, className, ...resto }: Props) {
   const id = useId()
   const idError = `${id}-error`
   const tieneError = error !== undefined
 
   return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+    <div>
+      <label htmlFor={id} className="mb-1 block text-[10px] text-acento-lila/90">
         {etiqueta}
       </label>
 
@@ -24,18 +29,17 @@ export function TextArea({ etiqueta, error, className, ...resto }: Props) {
         aria-invalid={tieneError || undefined}
         aria-describedby={tieneError ? idError : undefined}
         className={cn(
-          'w-full resize-y rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-900 shadow-xs transition-colors',
-          'placeholder:text-slate-400 focus:outline-2 focus:outline-offset-0',
-          'dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500',
+          'w-full resize-y rounded-md border bg-noche-950/40 px-3 py-2 text-[10px] text-white transition',
+          'placeholder:text-acento-lila/45 focus:outline-[0.5px] focus:outline-offset-0',
           tieneError
-            ? 'border-red-400 focus:outline-red-500 dark:border-red-500/70'
-            : 'border-slate-300 focus:outline-sky-600 dark:border-slate-700',
+            ? 'border-rose-400/70 focus:outline-rose-400'
+            : 'border-white/15 focus:border-transparent focus:outline-acento-rosa/80',
           className,
         )}
       />
 
       {tieneError && (
-        <p id={idError} className="text-sm text-red-600 dark:text-red-400">
+        <p id={idError} className="mt-1 text-[9px] text-rose-300">
           {error}
         </p>
       )}

@@ -10,6 +10,7 @@ import { useFormulario } from '../hooks/useFormulario'
 import type { ErroresDe, Validador } from '../hooks/useFormulario'
 import { toApiError } from '../lib/http'
 import { coincideCon, correoValido, longitudMinima, primerError, requerido } from '../utils/validaciones'
+import { Logo } from '../components/Logo'
 
 type Campos = {
   name: string
@@ -83,11 +84,11 @@ export function RegisterPage() {
   return (
     <AuthLayout
       titulo="Crea tu cuenta"
-      descripcion="Con una cuenta puedes consultar ciudades y dejar comentarios."
+      logo={Logo({ tamano: 'base' })}
       pie={
         <>
           Ya tienes cuenta?{' '}
-          <Link to="/login" className="font-medium text-sky-700 hover:underline dark:text-sky-400">
+          <Link to="/login" className="font-medium text-acento-rosa hover:underline">
             Inicia sesion
           </Link>
         </>

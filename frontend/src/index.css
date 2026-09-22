@@ -1,17 +1,57 @@
 @import "tailwindcss";
 
-/* Modo oscuro por clase en <html> y no por preferencia del sistema, para que
-   el interruptor pueda sobreescribir lo que diga el sistema operativo. */
-@custom-variant dark (&:where(.dark, .dark *));
-
+/*
+ * Tokens tomados del archivo de Figma "Weather App UI Design":
+ * los solidos vienen de Color Styles y los degradados de Weather Color Styles.
+ * La interfaz es solo oscura, como el diseno: no hay variante clara.
+ */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Escala de morados, de mas profundo a mas claro. */
+  --color-noche-950: #1c1b33;
+  --color-noche-900: #1f1d47;
+  --color-noche-800: #2e335a;
+  --color-noche-700: #312b5b;
+  --color-noche-600: #362a84;
+  --color-noche-500: #48319d;
+  --color-noche-400: #5936b4;
+  --color-noche-300: #7758d1;
+
+  /* Acentos: el degradado azul -> rosa de las barras y el magenta solido. */
+  --color-acento-azul: #427bd1;
+  --color-acento-rosa: #c159ec;
+  --color-acento-magenta: #c427fb;
+  --color-acento-cielo: #aec9ff;
+  --color-acento-lila: #e0d9ff;
+
+  --radius-tarjeta: 24px;
+  --radius-widget: 22px;
+
+  --shadow-tarjeta: 0 18px 40px -20px rgb(0 0 0 / 0.55);
 }
 
 @layer base {
+  html {
+    color-scheme: dark;
+  }
+
   body {
-    @apply bg-slate-50 font-sans text-slate-900 antialiased;
-    @apply dark:bg-slate-950 dark:text-slate-100;
+    @apply min-h-dvh font-sans text-white antialiased;
+    /* Cielo nocturno del diseno: degradado vertical con puntos como estrellas. */
+    background-color: var(--color-noche-950);
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, rgb(255 255 255 / 0.55) 50%, transparent 51%),
+      radial-gradient(1px 1px at 28% 6%, rgb(255 255 255 / 0.4) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 41% 26%, rgb(255 255 255 / 0.5) 50%, transparent 51%),
+      radial-gradient(1px 1px at 58% 12%, rgb(255 255 255 / 0.45) 50%, transparent 51%),
+      radial-gradient(1px 1px at 73% 30%, rgb(255 255 255 / 0.35) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 86% 8%, rgb(255 255 255 / 0.5) 50%, transparent 51%),
+      radial-gradient(1px 1px at 93% 22%, rgb(255 255 255 / 0.4) 50%, transparent 51%),
+      radial-gradient(1px 1px at 8% 44%, rgb(255 255 255 / 0.3) 50%, transparent 51%),
+      radial-gradient(1px 1px at 66% 48%, rgb(255 255 255 / 0.3) 50%, transparent 51%),
+      linear-gradient(180deg, var(--color-noche-800) 0%, var(--color-noche-950) 100%);
+    background-attachment: fixed;
   }
 
   /* Respeta a quien pidio menos movimiento en su sistema. */
@@ -22,5 +62,68 @@
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+/* Superficie translucida con borde fino, la base de widgets y paneles. */
+@utility vidrio {
+  background: linear-gradient(168deg, rgb(72 49 157 / 0.35) 0%, rgb(46 51 90 / 0.3) 100%);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/*
+ * Tarjeta de ciudad. El degradado va en horizontal, como en el diseno, y el
+ * borde superior es una diagonal que baja un 36% de la altura de izquierda a
+ * derecha: ese corte es el que deja sitio al icono del clima.
+ *
+ * El recorte se aplica despues del radio, asi que las esquinas redondeadas
+ * sobreviven salvo la superior derecha, que la diagonal se lleva por delante.
+ */
+@utility tarjeta-clima {
+  background: linear-gradient(100deg, #5735B2 0%, #3B2C8B 100%);
+  box-shadow: var(--shadow-tarjeta);
+  clip-path: polygon(0% 0%, 100% 36%, 100% 100%, 0% 100%);
+}
+
+/* Degradado azul -> rosa de las barras de progreso y los botones principales. */
+@utility degradado-acento {
+  background-image: linear-gradient(90deg, var(--color-acento-azul) 0%, var(--color-acento-rosa) 100%);
+}
+
+/*
+ * El mismo vidrio, pero solo por debajo de lg. En escritorio las dos columnas
+ * se separan con su color de fondo y ocupan la pantalla entera, asi que un
+ * borde y un radio ahi sobrarian.
+ */
+@utility vidrio-movil {
+  @media (width < 64rem) {
+    border-radius: var(--radius-tarjeta);
+    background: linear-gradient(168deg, rgb(72 49 157 / 0.35) 0%, rgb(46 51 90 / 0.3) 100%);
+    border: 1px solid rgb(255 255 255 / 0.14);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+}
+
+/* Barra de scroll discreta: la interfaz tiene varias zonas que se desplazan
+   por dentro y la barra nativa de Windows rompe el tono oscuro. */
+@utility barra-fina {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.22) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgb(255 255 255 / 0.22);
+    border-radius: 999px;
   }
 }

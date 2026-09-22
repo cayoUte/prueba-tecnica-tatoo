@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { GuestRoute } from './components/GuestRoute'
+import { ClimaProvider } from './context/ClimaProvider'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
@@ -14,7 +15,14 @@ export default function App() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<DashboardPage />} />
+        <Route
+          path="/"
+          element={
+            <ClimaProvider>
+              <DashboardPage />
+            </ClimaProvider>
+          }
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

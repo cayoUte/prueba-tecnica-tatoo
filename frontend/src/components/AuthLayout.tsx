@@ -1,32 +1,26 @@
 import type { ReactNode } from 'react'
-import { ThemeToggle } from './ThemeToggle'
 
 interface Props {
   titulo: string
-  descripcion: string
   children: ReactNode
   pie: ReactNode
+  logo: ReactNode
 }
 
-export function AuthLayout({ titulo, descripcion, children, pie }: Props) {
+export function AuthLayout({ titulo, children, pie, logo }: Props) {
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="flex justify-end px-4 py-3">
-        <ThemeToggle />
-      </header>
+    <main className="flex min-h-dvh items-start justify-center px-4 pt-10 pb-16 sm:items-center sm:pt-4">
+      <div className="w-full max-w-88">
+        <div className="flex flex-col items-center py-8 sm:py-12">
+          {logo && <div className="mb-4">{logo}</div>}
+          <h4 className="text-center text-lg font-semibold tracking-tight">{titulo}</h4>
 
-      <main className="flex flex-1 items-start justify-center px-4 pb-16 sm:items-center">
-        <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">{titulo}</h1>
-          <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">{descripcion}</p>
+          {/* 250px es el ancho del formulario en la escala compacta. */}
+          <div className="mt-5 w-[250px]">{children}</div>
 
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            {children}
-          </div>
-
-          <p className="mt-5 text-center text-sm text-slate-600 dark:text-slate-400">{pie}</p>
+          <p className="mt-5 text-center text-[10px] text-acento-lila/70">{pie}</p>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   )
 }

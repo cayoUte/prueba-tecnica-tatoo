@@ -9,7 +9,7 @@ export function ProtectedRoute() {
   // redirigir aqui expulsaria a quien si estaba logueado al recargar.
   if (cargandoSesion) {
     return (
-      <div className="flex min-h-dvh items-center justify-center text-slate-500 dark:text-slate-400">
+      <div className="flex min-h-dvh items-center justify-center text-acento-lila/70">
         <Spinner className="size-6" />
         <span className="ml-3 text-sm">Comprobando tu sesion...</span>
       </div>

@@ -4,7 +4,13 @@
  */
 
 export function requerido(valor: string, nombre = 'Este campo'): string | undefined {
-  return valor.trim().length === 0 ? `${nombre} es obligatorio.` : undefined
+  if (valor.trim().length > 0) return undefined
+
+  // El adjetivo concuerda con el articulo del nombre: sin esto salia
+  // "La ciudad es obligatorio", que es justo lo que leia el usuario.
+  const femenino = nombre.startsWith('La ')
+
+  return `${nombre} es ${femenino ? 'obligatoria' : 'obligatorio'}.`
 }
 
 export function longitudMinima(valor: string, minimo: number, nombre = 'Este campo'): string | undefined {

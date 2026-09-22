@@ -1,24 +1,29 @@
-import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useFormulario } from '../hooks/useFormulario'
 import type { ErroresDe, Validador } from '../hooks/useFormulario'
 import type { ApiError } from '../types/api'
-import { longitudMaxima, longitudMinima, primerError, requerido } from '../utils/validaciones'
-import { Alert } from './ui/Alert'
-import { Button } from './ui/Button'
-import { TextField } from './ui/TextField'
+import { cn } from '../utils/cn'
+import { longitudMaxima, longitudMinima, primerError } from '../utils/validaciones'
+import { useId } from 'react'
+import { Spinner } from './ui/Spinner'
 
 type Campos = { ciudad: string }
 
 const INICIALES: Campos = { ciudad: '' }
 
-// Las mismas reglas que StoreClimaRequest en el backend. El navegador avisa
-// antes para no gastar un viaje, pero el servidor sigue siendo la autoridad.
+// Las reglas de longitud de StoreClimaRequest. El navegador avisa antes para
+// no gastar un viaje, pero el servidor sigue siendo la autoridad: alli la
+// ciudad si es obligatoria.
+//
+// Aqui no lo es: un buscador vacio no es un formulario a medio rellenar, es
+// que todavia no hay nada que buscar. Por eso el campo vacio no produce
+// mensaje, ni al salir del input ni al pulsar la lupa.
 const validar: Validador<Campos> = (valores) => {
   const errores: ErroresDe<Campos> = {}
 
+  if (valores.ciudad.trim().length === 0) return errores
+
   const ciudad = primerError(
-    requerido(valores.ciudad, 'La ciudad'),
     longitudMinima(valores.ciudad, 2, 'La ciudad'),
     longitudMaxima(valores.ciudad, 80, 'La ciudad'),
   )
@@ -27,69 +32,104 @@ const validar: Validador<Campos> = (valores) => {
   return errores
 }
 
+function Lupa() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
+      <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M13.5 13.5 17 17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 interface Props {
   onBuscar: (ciudad: string) => Promise<ApiError | null>
   consultando: boolean
 }
 
+/**
+ * Buscador de la barra superior: campo y boton unidos en un solo bloque,
+ * separados por un divisor, como una barra de busqueda clasica.
+ *
+ * No usa TextField porque aqui el campo no lleva borde propio ni etiqueta
+ * visible: el borde y el radio son del grupo entero, y el `aria-label` cubre
+ * lo que la etiqueta haria.
+ *
+ * Los mensajes van en un globo flotante en vez de empujar el contenido: la
+ * barra tiene altura fija y cualquier texto extra la descuadraria.
+ */
 export function CitySearch({ onBuscar, consultando }: Props) {
+  const id = useId()
   const { valores, esValido, cambiar, tocar, errorDe, marcarTodosTocados, aplicarErroresDeApi, reiniciar } =
     useFormulario(INICIALES, validar)
-  const [aviso, setAviso] = useState<string | null>(null)
+
+  // Solo errores del propio campo. Lo demas (ciudad inexistente, servicio
+  // caido, sesion expirada) lo anuncia el snackbar desde useWeather.
+  const mensaje = errorDe('ciudad')
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
+
+    const ciudad = valores.ciudad.trim()
+
+    // Con el campo vacio no se busca ni se avisa: no hay nada que decir.
+    if (ciudad.length === 0) return
+
     marcarTodosTocados()
-    setAviso(null)
 
     if (!esValido) return
 
-    const fallo = await onBuscar(valores.ciudad.trim())
+    const fallo = await onBuscar(ciudad)
 
     if (fallo === null) {
       reiniciar()
       return
     }
 
-    // Un 422 trae el error del campo y se pinta bajo el input.
-    // Un 404 (ciudad inexistente) o un 503 son de la operacion: van arriba.
     aplicarErroresDeApi(fallo)
-
-    if (Object.keys(fallo.errors).length === 0) {
-      setAviso(fallo.message)
-    }
   }
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900">
-      <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Consultar una ciudad</h2>
-      <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-        Cada busqueda pregunta a OpenWeatherMap y queda guardada en el historial.
-      </p>
+    <form onSubmit={enviar} className="relative" noValidate>
+      <div
+        className={cn(
+          'flex h-[30px] items-stretch overflow-hidden rounded-md border bg-noche-950/40 transition',
+          'focus-within:outline-[0.5px] focus-within:outline-offset-0',
+          mensaje !== undefined
+            ? 'border-rose-400/70 focus-within:outline-rose-400'
+            : 'border-white/15 focus-within:outline-acento-rosa/80',
+        )}
+      >
+        <input
+          id={id}
+          name="ciudad"
+          aria-label="Ciudad"
+          autoComplete="off"
+          placeholder="Busca una ciudad..."
+          value={valores.ciudad}
+          onChange={cambiar('ciudad')}
+          onBlur={tocar('ciudad')}
+          className="min-w-0 flex-1 bg-transparent px-3 text-[10px] text-white placeholder:text-acento-lila/45 focus:outline-none"
+        />
 
-      <form onSubmit={enviar} className="mt-4 space-y-3" noValidate>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-          <div className="flex-1">
-            <TextField
-              etiqueta="Ciudad"
-              name="ciudad"
-              autoComplete="off"
-              placeholder="Quito, Guayaquil, Loja..."
-              value={valores.ciudad}
-              onChange={cambiar('ciudad')}
-              onBlur={tocar('ciudad')}
-              error={errorDe('ciudad')}
-            />
-          </div>
+        <button
+          type="submit"
+          disabled={consultando}
+          aria-label="Consultar el clima de la ciudad"
+          title="Consultar"
+          className="flex w-9 shrink-0 items-center justify-center border-l border-white/15 bg-white/5 text-acento-lila/80 transition hover:bg-white/10 hover:text-white focus-visible:outline-[0.5px] focus-visible:outline-offset-[-2px] focus-visible:outline-acento-rosa disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {consultando ? <Spinner /> : <Lupa />}
+        </button>
+      </div>
 
-          {/* El margen superior alinea el boton con el input, no con su etiqueta. */}
-          <Button type="submit" cargando={consultando} className="sm:mt-7">
-            Consultar
-          </Button>
-        </div>
-
-        {aviso !== null && <Alert>{aviso}</Alert>}
-      </form>
-    </section>
+      {mensaje !== undefined && (
+        <p
+          role="alert"
+          className="absolute top-full right-0 left-0 z-30 mt-1 rounded-md border border-rose-400/40 bg-noche-950/95 px-2 py-1 text-[10px] text-rose-200 backdrop-blur"
+        >
+          {mensaje}
+        </p>
+      )}
+    </form>
   )
 }
