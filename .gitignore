@@ -2,6 +2,10 @@
 .env
 .env.*
 !.env.example
+# backend/.env se versiona a proposito: lleva credenciales de demo para que
+# la prueba se pueda ejecutar sin registrarse en OpenWeatherMap. Ver el
+# README, seccion "Las credenciales estan en el repositorio a proposito".
+!backend/.env
 
 # ─── Dependencias ────────────────────────────────────────
 node_modules/
@@ -30,6 +34,7 @@ backend/storage/*.key
 .vscode/
 .idea/
 .zed/
+.claude/
 *.swp
 .DS_Store
 Thumbs.db
